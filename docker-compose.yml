@@ -1,0 +1,43 @@
+version: "3.3"
+services:
+  mongodb:
+    image : mongo
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=test
+    volumes:
+      - /home/jvmazagao/mongodb/database:/data/db
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PGDATA: /data/postgres
+    volumes:
+      - /home/jvmazagao/postgres/database:/data/db
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+  notification:
+    image: notification:latest
+    container_name: notification
+    build:
+      context: .
+    depends_on:
+      - postgres
+      - mongodb
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/test
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=changeme
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    ports:
+      - '8080:8080'
+    expose:
+      - '8080'
+
